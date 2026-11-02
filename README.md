@@ -97,7 +97,10 @@ StreamOut::getPresentationPosition
 sudo ./scripts/patch-image-audio-hal.py       # vendor.img: HAL 跳转
 sudo ./scripts/patch-image-timeout.sh         # system.img: 超时倍数
 
-# 3) 启动
+# 3) 建 AVD（从仓库里的模板）
+./scripts/create-avd.sh gx26
+
+# 4) 启动
 ./bin/arm-emu.sh gx26 5562
 ```
 
@@ -109,6 +112,33 @@ $EMU/qemu/linux-x86_64/qemu-system-aarch64 \
   -avd gx26 -no-window -accel off -port 5562 -no-snapshot \
   -gpu swiftshader_indirect
 ```
+
+## AVD 定义（模拟器的"源代码"）
+
+AVD 不是二进制，就是两个文本文件，已全部纳入版本管理：
+
+```
+avd/gx26/config.ini        320x640 @160dpi, 4 核, 3GB RAM, 4GB data
+avd/gx_arm64/config.ini    1080x2340 @440dpi (pixel_5)
+scripts/create-avd.sh      按模板生成 ~/.android/avd/<name>.avd/ + <name>.ini
+```
+
+关键字段（gx26）：
+
+| 键 | 值 | 为什么 |
+|----|-----|--------|
+| `abi.type` / `hw.cpu.arch` | `arm64-v8a` / `arm64` | 真 ARM64 |
+| `image.sysdir.1` | `system-images/android-26/default/arm64-v8a/` | API 26 镜像 |
+| `hw.lcd.width/height/density` | 320 / 640 / 160 | 分辨率小 = TCG 下 SurfaceFlinger 压力小 |
+| `hw.ramSize` / `hw.cpu.ncore` | 3072 / 4 | TCG 单线程，加 vCPU 无收益，4 够用 |
+| `hw.audioInput/Output` | yes | 关掉会让 guest 音频 HAL 崩，**别改** |
+
+不带 `hw.device.name` —— 用通用 profile，避免 pixel 之类的额外传感器/相机初始化拖慢冷启动。
+
+`create-avd.sh` **不用** `avdmanager create avd`：新版 cmdline-tools 会崩在
+`Range [0, 0 + -1) out of bounds for length 256`（扫 device profile 时越界），
+而且它生成的默认 config 还得再改一遍。直接写两个文件的路径更短也更可控——
+已实测：从模板新建的 AVD 冷启动到 `sys.boot_completed=1`。
 
 ## 验证
 
@@ -146,6 +176,9 @@ bin/arm-emu.sh                      启动器（自动定位 30.4.5，无则报�
 scripts/get-emulator-3045.sh        下载并侧装 emulator 30.4.5
 scripts/patch-image-audio-hal.py    修补 vendor.img 的音频 HAL 跳转
 scripts/patch-image-timeout.sh      给 system.img 的 build.prop 加超时倍数
+scripts/create-avd.sh               从 avd/ 模板生成 AVD
+avd/gx26/config.ini                 AVD 定义：320x640 @160dpi 轻量档
+avd/gx_arm64/config.ini             AVD 定义：pixel_5 1080x2340
 docs/TROUBLESHOOTING.md             逐步排障：怎么确认是哪个问题
 ```
 
