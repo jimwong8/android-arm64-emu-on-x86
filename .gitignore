@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.orig-backup
+*.audiohal-orig.so
+*.audiohal-patched.so
+*.zip
+screen*.png
