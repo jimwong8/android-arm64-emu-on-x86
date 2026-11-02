@@ -180,6 +180,7 @@ scripts/create-avd.sh               从 avd/ 模板生成 AVD
 avd/gx26/config.ini                 AVD 定义：320x640 @160dpi 轻量档
 avd/gx_arm64/config.ini             AVD 定义：pixel_5 1080x2340
 docs/TROUBLESHOOTING.md             逐步排障：怎么确认是哪个问题
+docs/VERIFICATION.md                原始验证输出（含推理/结论的出处）
 ```
 
 ## License
